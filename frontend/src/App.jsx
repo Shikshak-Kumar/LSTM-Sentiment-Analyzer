@@ -7,11 +7,12 @@ function App() {
   const [seedText, setSeedText] = useState('');
   const [numWords, setNumWords] = useState(5);
   const [completedText, setCompletedText] = useState('');
+  const [predictedSeedText, setPredictedSeedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handlePredict = async (e) => {
-    e.preventDefault();
+  const handlePredict = async (e, isSingleWord = false) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (!seedText.trim()) return;
 
     setIsLoading(true);
@@ -19,10 +20,12 @@ function App() {
     setCompletedText('');
 
     try {
+      const currentSeed = seedText;
       const response = await axios.post('http://localhost:8000/predict', {
-        text: seedText,
-        num_words: parseInt(numWords)
+        text: currentSeed,
+        num_words: isSingleWord ? 1 : parseInt(numWords)
       });
+      setPredictedSeedText(currentSeed);
       setCompletedText(response.data.generated_text);
     } catch (err) {
       setError(err.response?.data?.detail || 'An error occurred while generating text.');
@@ -43,7 +46,7 @@ function App() {
         </header>
 
         <main className="main-content">
-          <form onSubmit={handlePredict} className="input-form">
+          <form onSubmit={(e) => { e.preventDefault(); handlePredict(e, false); }} className="input-form">
             <div className="input-group">
               <label htmlFor="seedText">Enter starting text</label>
               <div className="textarea-wrapper">
@@ -71,23 +74,43 @@ function App() {
                   className="glass-input number-input"
                 />
               </div>
-              <button 
-                type="submit" 
-                className="generate-button"
-                disabled={isLoading || !seedText.trim()}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="spin-icon" size={18} />
-                    <span>Generating...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send size={18} />
-                    <span>Complete</span>
-                  </>
-                )}
-              </button>
+              <div className="button-group" style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  type="button" 
+                  className="generate-button"
+                  onClick={(e) => handlePredict(e, true)}
+                  disabled={isLoading || !seedText.trim()}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="spin-icon" size={18} />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={18} />
+                      <span>Next Word</span>
+                    </>
+                  )}
+                </button>
+                <button 
+                  type="submit" 
+                  className="generate-button"
+                  disabled={isLoading || !seedText.trim()}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="spin-icon" size={18} />
+                      <span>Generating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send size={18} />
+                      <span>Complete Text</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
 
@@ -101,8 +124,8 @@ function App() {
             <div className="result-container fade-in">
               <h3>Generated Result</h3>
               <div className="result-content">
-                <span className="seed">{seedText}</span>
-                <span className="generated"> {completedText.replace(seedText, '')}</span>
+                <span className="seed">{predictedSeedText}</span>
+                <span className="generated"> {completedText.replace(predictedSeedText, '')}</span>
               </div>
             </div>
           )}
