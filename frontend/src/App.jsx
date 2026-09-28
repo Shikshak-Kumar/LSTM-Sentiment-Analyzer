@@ -21,7 +21,8 @@ function App() {
 
     try {
       const currentSeed = seedText;
-      const response = await axios.post('http://localhost:8000/predict', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await axios.post(`${apiUrl}/predict`, {
         text: currentSeed,
         num_words: isSingleWord ? 1 : parseInt(numWords)
       });
